@@ -1,0 +1,71 @@
+[
+  {
+    "id": "RB-REDIS-01",
+    "service": "*",
+    "issue_type": "redis",
+    "title": "Redis timeouts / connection errors",
+    "last_reviewed": "2025-06-14",
+    "steps": [
+      "Check Redis server health dashboard (CPU, memory, evictions).",
+      "If timeouts persist, restart the Redis cluster primary.",
+      "Check application Redis client pool metrics.",
+      "Escalate to platform-team if not resolved in 30 minutes."
+    ],
+    "notes": "Runbook last reviewed June 2025. Generic across services."
+  },
+  {
+    "id": "RB-DB-01",
+    "service": "*",
+    "issue_type": "database",
+    "title": "Database connection pool exhaustion",
+    "last_reviewed": "2026-03-10",
+    "steps": [
+      "Compare application pool utilization with Postgres CPU / max_connections.",
+      "Check for idle-in-transaction connections and recent deploys touching transactions.",
+      "If a recent deploy correlates, roll it back.",
+      "Restart pods to release leaked connections only after rollback.",
+      "Do not fail over Postgres unless the database itself is unhealthy."
+    ],
+    "notes": "Updated after INC-012."
+  },
+  {
+    "id": "RB-DEPLOY-01",
+    "service": "*",
+    "issue_type": "deployment",
+    "title": "Bad deployment / configuration",
+    "last_reviewed": "2026-05-02",
+    "steps": [
+      "If errors began within minutes of a deploy, compare config diff.",
+      "Roll back to the previous version.",
+      "Validate config in staging before re-deploying."
+    ],
+    "notes": ""
+  },
+  {
+    "id": "RB-PAY-PROVIDER-01",
+    "service": "payment-api",
+    "issue_type": "provider",
+    "title": "Payment provider latency",
+    "last_reviewed": "2026-02-05",
+    "steps": [
+      "Check PayFlow status page and upstream latency metrics.",
+      "If upstream p99 > 3s, open circuit breaker and route to CardStream.",
+      "Do not scale payment-api for upstream latency."
+    ],
+    "notes": ""
+  },
+  {
+    "id": "RB-MEM-01",
+    "service": "*",
+    "issue_type": "memory",
+    "title": "Memory leak / OOMKilled pods",
+    "last_reviewed": "2026-01-15",
+    "steps": [
+      "Check heap growth slope and recent deploys adding caches/listeners.",
+      "Capture heap dump before restart.",
+      "Rolling restart for relief; fix root cause (bound caches).",
+      "Raising memory limits only delays OOM."
+    ],
+    "notes": ""
+  }
+]

@@ -1,0 +1,10 @@
+[
+  {"name": "payment-api", "team": "payments-team", "tier": "tier-0", "dependencies": ["redis-payments", "postgres-payments", "PayFlow (primary provider)", "CardStream (secondary provider)"], "redis_pool_size": 100},
+  {"name": "orders-api", "team": "orders-team", "tier": "tier-0", "dependencies": ["postgres-orders", "inventory-service"], "db_pool_size": 45},
+  {"name": "checkout-web", "team": "web-team", "tier": "tier-0", "dependencies": ["payment-api", "orders-api"]},
+  {"name": "session-service", "team": "identity-team", "tier": "tier-1", "dependencies": ["redis-sessions"]},
+  {"name": "inventory-service", "team": "orders-team", "tier": "tier-1", "dependencies": ["postgres-inventory"]},
+  {"name": "notification-service", "team": "platform-team", "tier": "tier-2", "dependencies": ["rabbitmq", "SMS provider", "email provider"]},
+  {"name": "search-api", "team": "discovery-team", "tier": "tier-1", "dependencies": ["elasticsearch"]},
+  {"name": "user-service", "team": "identity-team", "tier": "tier-1", "dependencies": ["postgres-users"]}
+]

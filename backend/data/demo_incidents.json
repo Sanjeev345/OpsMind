@@ -1,0 +1,88 @@
+[
+  {
+    "id": "INC-027",
+    "title": "payment-api latency spike and elevated error rate",
+    "timestamp": "2026-09-29T14:32:00Z",
+    "service": "payment-api",
+    "severity": "SEV-1",
+    "status": "open",
+    "summary": "PagerDuty alert: payment-api p99 latency and 5xx rate breached SLO. Checkout conversions dropping.",
+    "alerts": ["payment-api p99 latency > 2s for 10m", "payment-api 5xx rate > 5%", "Redis client timeout errors > 500/min"],
+    "metrics": [
+      {"key": "latency_p99", "label": "Latency p99", "value": "4.8s", "baseline": "180ms", "status": "critical"},
+      {"key": "error_rate", "label": "Error Rate", "value": "18.4%", "baseline": "0.2%", "status": "critical"},
+      {"key": "redis_timeouts", "label": "Redis Timeouts", "value": "1,842/min", "baseline": "< 5/min", "status": "critical"},
+      {"key": "redis_pool_active", "label": "Redis Connections", "value": "100 / 100", "baseline": "35 / 100", "status": "critical"}
+    ],
+    "health": {
+      "service": "payment-api",
+      "window": "last 15 minutes",
+      "api": {"latency_p50": "1.9s", "latency_p99": "4.8s", "error_rate": "18.4%", "requests_per_min": "11,200", "workers": "8 pods x 4 workers", "cpu": "46%", "memory": "58%"},
+      "redis_client": {"pool_active": "100/100", "pool_wait_p99": "3.9s", "timeout_errors": "1,842/min"},
+      "redis_server": {"cpu": "29%", "memory": "49%", "evictions": "0/sec", "connected_clients": "412", "replication": "healthy", "ping_latency": "0.4ms"},
+      "upstream": {"payflow_latency_p99": "410ms", "payflow_error_rate": "0.1%"},
+      "postgres": {"cpu": "22%", "pool_active": "18/60"}
+    },
+    "deployments": [
+      {"version": "v2.8.4", "deployed_minutes_ago": 18, "author": "payments-team", "change": "Added Redis-backed idempotency-key check on every /charge and /refund request", "status": "completed"},
+      {"version": "v2.8.3", "deployed_minutes_ago": 2940, "author": "payments-team", "change": "Receipt email template fix", "status": "completed"}
+    ]
+  },
+  {
+    "id": "INC-028",
+    "title": "payment-api timeouts after worker scale-up",
+    "timestamp": "2026-09-29T16:05:00Z",
+    "service": "payment-api",
+    "severity": "SEV-1",
+    "status": "open",
+    "summary": "payment-api timeouts climbing after a worker concurrency change. On-call has proposed restarting the Redis cluster per the Redis runbook.",
+    "alerts": ["payment-api p99 latency > 2s for 5m", "payment-api 5xx rate > 5%", "Redis client timeout errors > 500/min"],
+    "metrics": [
+      {"key": "latency_p99", "label": "Latency p99", "value": "3.9s", "baseline": "180ms", "status": "critical"},
+      {"key": "error_rate", "label": "Error Rate", "value": "12.7%", "baseline": "0.2%", "status": "critical"},
+      {"key": "redis_timeouts", "label": "Redis Timeouts", "value": "1,310/min", "baseline": "< 5/min", "status": "critical"},
+      {"key": "redis_pool_active", "label": "Redis Connections", "value": "100 / 100", "baseline": "35 / 100", "status": "critical"}
+    ],
+    "health": {
+      "service": "payment-api",
+      "window": "last 15 minutes",
+      "api": {"latency_p50": "1.4s", "latency_p99": "3.9s", "error_rate": "12.7%", "requests_per_min": "10,400", "workers": "8 pods x 6 workers", "cpu": "51%", "memory": "61%"},
+      "redis_client": {"pool_active": "100/100", "pool_wait_p99": "3.1s", "timeout_errors": "1,310/min"},
+      "redis_server": {"cpu": "26%", "memory": "47%", "evictions": "0/sec", "connected_clients": "398", "replication": "healthy", "ping_latency": "0.5ms"},
+      "upstream": {"payflow_latency_p99": "390ms", "payflow_error_rate": "0.1%"},
+      "postgres": {"cpu": "20%", "pool_active": "16/60"},
+      "oncall_note": "On-call proposes restarting the Redis cluster (Redis runbook step 2)."
+    },
+    "deployments": [
+      {"version": "v2.8.5", "deployed_minutes_ago": 11, "author": "platform-team", "change": "Raised gunicorn workers per pod from 4 to 6 (more concurrent Redis callers, pool size unchanged)", "status": "completed"},
+      {"version": "v2.8.4", "deployed_minutes_ago": 111, "author": "payments-team", "change": "Added Redis-backed idempotency-key check on every /charge and /refund request", "status": "completed"}
+    ]
+  },
+  {
+    "id": "INC-029",
+    "title": "orders-api order creation failing",
+    "timestamp": "2026-09-29T16:40:00Z",
+    "service": "orders-api",
+    "severity": "SEV-2",
+    "status": "open",
+    "summary": "orders-api returning 500s on POST /orders. Postgres alerts quiet.",
+    "alerts": ["orders-api 5xx rate > 5%", "orders-api DB connection acquisition timeout"],
+    "metrics": [
+      {"key": "latency_p99", "label": "Latency p99", "value": "6.1s", "baseline": "220ms", "status": "critical"},
+      {"key": "error_rate", "label": "Error Rate", "value": "24.6%", "baseline": "0.3%", "status": "critical"},
+      {"key": "db_pool_active", "label": "DB Pool", "value": "45 / 45", "baseline": "14 / 45", "status": "critical"},
+      {"key": "postgres_cpu", "label": "Postgres CPU", "value": "24%", "baseline": "20%", "status": "ok"}
+    ],
+    "health": {
+      "service": "orders-api",
+      "window": "last 15 minutes",
+      "api": {"latency_p99": "6.1s", "error_rate": "24.6%", "requests_per_min": "3,900", "cpu": "31%"},
+      "db_client": {"pool_active": "45/45", "acquire_timeout_errors": "740/min", "connections_idle_in_transaction": "31"},
+      "postgres": {"cpu": "24%", "replication_lag": "0.2s", "max_connections_used": "212/500"},
+      "redis_server": {"cpu": "12%", "memory": "30%"}
+    },
+    "deployments": [
+      {"version": "v4.11.0", "deployed_minutes_ago": 42, "author": "orders-team", "change": "Wrapped order creation and inventory reservation in a single transaction with retry", "status": "completed"}
+    ]
+  }
+]
